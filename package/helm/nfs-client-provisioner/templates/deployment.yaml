@@ -1,0 +1,45 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  labels:
+{{ include "service.labels.standard" . | indent 4 }}
+  name: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+{{ include "service.labels.standard" . | indent 6 }}
+  replicas: 2
+  strategy:
+{{ toYaml .Values.strategy | indent 4 }}
+  template:
+    metadata:
+      labels:
+{{ include "service.labels.standard" . | indent 8 }}
+    spec:
+      serviceAccountName:  {{ if .Values.rbac.create }}"{{ .Release.Name }}-sa"{{ else }}"{{ .Values.rbac.serviceAccountName }}"{{ end }}
+      containers:
+      - name: nfs-client-provisioner
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        volumeMounts:
+          - name: nfs-client-root
+            mountPath: /persistentvolumes
+        env:
+          - name: PROVISIONER_NAME
+            value: {{ .Values.storageClass.provisioner }}
+          - name: NFS_SERVER
+            value: {{ .Values.persistence.nfsServer }}
+          - name: NFS_PATH
+            value: {{ .Values.persistence.nfsPath }}
+      {{- with .Values.resources }}
+        resources:
+{{ toYaml . | indent 10 }}
+      {{- end }}
+      volumes:
+      - name: nfs-client-root
+        {{- if .Values.persistence.enabled }}
+        nfs:
+          server: {{ .Values.persistence.nfsServer }}
+          path: {{ .Values.persistence.nfsPath }}
+        {{- else }}
+        emptyDir: {}
+        {{- end }}

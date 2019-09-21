@@ -1,0 +1,21 @@
+---
+apiVersion: kubeadm.k8s.io/v1beta1
+kind: ClusterConfiguration
+kubernetesVersion: v1.15.0
+controlPlaneEndpoint: "${VIP}:8443"
+maxPods: 100
+networkPlugin: cni
+imageRepository: registry.aliyuncs.com/google_containers
+apiServer:
+  certSANs:
+  - ${CP0_IP}
+  - ${CP1_IP}
+  - ${CP2_IP}
+  - ${VIP}
+networking:
+  # This CIDR is a Calico default. Substitute or remove for your CNI provider.
+  podSubnet: ${CIDR}
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: ipvs

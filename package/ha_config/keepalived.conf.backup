@@ -1,0 +1,27 @@
+global_defs {
+   router_id LVS_DEVEL
+}
+
+vrrp_script check_haproxy {
+    script /etc/keepalived/check_haproxy.sh
+    interval 3
+}
+
+vrrp_instance VI_1 {
+    state MASTER
+    interface eth0
+    virtual_router_id 82
+    priority ${PRIORITY}
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass just0kk
+    }
+    virtual_ipaddress {
+        ${VIP}
+    }
+    track_script {   
+        check_haproxy
+    }
+}
+
